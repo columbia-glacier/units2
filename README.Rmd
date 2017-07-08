@@ -1,0 +1,93 @@
+---
+title: "units2"
+output: github_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+devtools::load_all()
+```
+
+units2 is a simple (and probably temporary) wrapper to the units class provided by the [units](https://github.com/edzer/units) package. Specifically, it avoids non-standard evaluation and the silent creation of unitless units, as was needed for my programmatic and piping needs.
+
+### Parse unit from string
+
+#### String formats
+
+`units::parse_unit` only supports product power form (e.g. `"kg m2 s-1"`). `units2::parse_unit` supports product power form (including `"+"`), arithmetic expressions (e.g. `"kg * (m^2 / s)"`), and any combination thereof (e.g. `"kg+1 (m^2 s-1)"`).
+  
+```{r}
+units2::parse_unit("kg m2 s-1")
+units2::parse_unit("kg (m^2 / s)")
+units2::parse_unit("kg+1 (m^2 s-1)")
+units2::parse_unit("in/s")
+units2::parse_unit("°")
+
+```
+  
+#### Unit names with numbers
+
+`units::parse_unit` fails with units with numbers in their name. `units2::parse_unit` fixes this.
+  
+```{r}
+unit_names <- names(units::ud_units)
+unit_names[grepl("[0-9]", unit_names)]
+```
+  
+```{r}
+tryCatch(units::parse_unit("H2O"), error = function(e) print(e))
+```
+```{r}
+units2::parse_unit("H2O")
+units2::parse_unit("H2O1")
+units2::parse_unit("1 / H2O-1")
+```
+
+#### Unknown units
+
+`units::parse_unit` silently creates new units. `units2::parse_unit` throws an error.
+
+```{r}
+units::parse_unit("unknown")
+tryCatch(units2::parse_unit("unknown"), error = function(e) print(e))
+```
+
+#### Unit symbols
+
+As a side effect of evaluating the constructed expression against `units::ud_units`, `units2::parse_unit` always replaces unit names with their corresponding symbols.
+
+```{r}
+units::parse_unit("meters seconds-1")
+units2::parse_unit("meters seconds-1")
+```
+
+### Deparse unit to string
+
+`units::as_cf` is renamed `units2::deparse_unit` for symmetry with `parse_unit`.
+  
+### Coercion and conversion
+
+`units2::as_units` and `units2::convert_units` accept either string or units objects as unit specifications, while `units::as.units` and `units::set_units` accepts only the latter.
+
+```{r}
+library(magrittr)
+x <- 1:10
+from <- "meters s-1"
+to <- "km hour-1"
+# units
+x %>%
+  units::as.units(value = units::parse_unit(from)) %>%
+  units::set_units(value = units::parse_unit(to))
+# units2 equivalent
+x %>%
+  units2::convert_units(from = from, to = to)
+```
+
+`units2` drops support for the non-standard evaluation in `units::set_units` because `units2::parse_unit` supports that notation in string form, avoiding confusing behavior:
+
+```{r}
+units2::as_units(x, "meters/s")
+tryCatch(units::set_units(x, meters/s), error = function(e) print(e))
+meters <- 0.01
+tryCatch(units::set_units(x, meters/s), error = function(e) print(e))
+```

@@ -1,0 +1,13 @@
+Package: units2
+Version: 0.1.0
+Title: A Simple and Safe Interface to the units Package
+Authors@R: c(person("Ethan", "Welty", role = c("aut", "cre"), email = "ethan.wety@gmail.com"))
+Imports:
+    magrittr,
+    udunits2,
+    units
+Description: units2 provides a simple and safe interface to the units class (from the units package)
+    by avoiding non-standard evaluation and the silent creation of new and unitless units.
+License: GPL-2
+Encoding: UTF-8
+RoxygenNote: 6.0.1
